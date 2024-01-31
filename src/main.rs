@@ -63,6 +63,20 @@ impl AudioPlayer {
     }
 }
 
+trait ClipboardExt {
+    fn update_clipboard(&mut self, command: &str);
+}
+
+impl ClipboardExt for Clipboard {
+    fn update_clipboard(&mut self, command: &str) {
+        self.set_text(command).unwrap();
+        println!(
+            "CMD to your clipboard:\t\t\t\t {} -> {}",
+            '\u{1F4CB}', command
+        );
+    }
+}
+
 fn match_cmd(keys: Vec<Keycode>) -> Option<CMD> {
     if keys.len() != 2 {
         return None;
@@ -89,14 +103,6 @@ fn get_player_id(text: String) -> i32 {
     }
     // print!("剪切板内容并不是一个player id\t{}", text);
     return 0;
-}
-
-fn update_clipboard(clipboard: &mut Clipboard, command: &str) {
-    clipboard.set_text(command).unwrap();
-    println!(
-        "CMD to your clipboard:\t\t\t\t {} -> {}",
-        '\u{1F4CB}', command
-    );
 }
 
 fn main() {
@@ -126,7 +132,7 @@ fn main() {
         if let Some(cmd) = cmd_type {
             match cmd {
                 CMD::ShowPlayers => {
-                    update_clipboard(&mut clipboard, "ShowPlayers");
+                    clipboard.update_clipboard("ShowPlayers");
                     audio_player.play(cmd)
                 }
                 CMD::MeToPlayer | CMD::PlayerToMe if player_id != 0 => {
@@ -135,8 +141,7 @@ fn main() {
                         CMD::PlayerToMe => format!("TeleportToMe {}", player_id),
                         _ => unreachable!(),
                     };
-
-                    update_clipboard(&mut clipboard, &cmd_str);
+                    clipboard.update_clipboard(&cmd_str);
                     audio_player.play(cmd)
                 }
                 _ => {}
