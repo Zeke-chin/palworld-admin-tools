@@ -19,6 +19,7 @@ enum CMD {
 struct AudioPlayer {
     cmd_sender: mpsc::Sender<(CMD, mpsc::Sender<()>)>,
 }
+
 impl AudioPlayer {
     fn new() -> Self {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<(CMD, mpsc::Sender<()>)>();
@@ -79,7 +80,7 @@ fn match_cmd(keys: Vec<Keycode>) -> Option<CMD> {
     }
 }
 
-fn to_palyer(text: String) -> i32 {
+fn get_player_id(text: String) -> i32 {
     // 判断是否为一个 长度为9 的数字 如：128991414
     if text.len() == 9 {
         if text.parse::<i32>().is_ok() {
@@ -90,47 +91,56 @@ fn to_palyer(text: String) -> i32 {
     return 0;
 }
 
+fn update_clipboard(clipboard: &mut Clipboard, command: &str) {
+    clipboard.set_text(command).unwrap();
+    println!(
+        "CMD to your clipboard:\t\t\t\t {} -> {}",
+        '\u{1F4CB}', command
+    );
+}
+
 fn main() {
     let mut clipboard: Clipboard = Clipboard::new().unwrap();
     let device_state = DeviceState::new();
     let mut cmd_str = "".to_string();
     let audio_player = AudioPlayer::new();
+    println!(
+        "开始监听剪切板和键盘, 按下 Ctrl + C 退出\n\
+    1. `\\` + `s`\t\t\tShowPlayers\n\
+    2. 复制9位id + `\\` + `p`\tTeleportToPlayer\n\
+    3. 复制9位id + `\\` + `m`\tTeleportToMe\n"
+    );
 
     loop {
         cmd_str.clear();
-        // let mut clipboard: Clipboard = Clipboard::new().unwrap();
         sleep(Duration::from_millis(100));
         let keys = device_state.get_keys();
         let cmd_type = match_cmd(keys);
         let clip_txt = clipboard.get_text().unwrap_or("".to_string());
-        let player_id = to_palyer(clip_txt);
+        let player_id = get_player_id(clip_txt);
 
         // 输出 cmd_type
-        println!("cmd_type:\t{:?}", cmd_type);
-        match cmd_type {
-            Some(CMD::ShowPlayers) => {
-                cmd_str = "ShowPlayers".to_string();
-                audio_player.play(CMD::ShowPlayers);
-            }
-            Some(CMD::MeToPlayer) => {
-                if player_id == 0 {
-                    continue;
-                }
-                cmd_str = format!("TeleportToPlayer {}", player_id);
-                audio_player.play(CMD::MeToPlayer);
-            }
-            Some(CMD::PlayerToMe) => {
-                if player_id == 0 {
-                    continue;
-                }
-                cmd_str = format!("TeleportToMe {}", player_id);
-                audio_player.play(CMD::PlayerToMe);
-            }
-            _ => {}
+        if cmd_type.is_some() {
+            println!("player_id:\t{}", player_id);
         }
-        if !cmd_str.is_empty() {
-            println!("CMD:\t{}", cmd_str);
-            clipboard.set_text(&cmd_str).unwrap();
+        if let Some(cmd) = cmd_type {
+            match cmd {
+                CMD::ShowPlayers => {
+                    update_clipboard(&mut clipboard, "ShowPlayers");
+                    audio_player.play(cmd)
+                }
+                CMD::MeToPlayer | CMD::PlayerToMe if player_id != 0 => {
+                    let cmd_str = match cmd {
+                        CMD::MeToPlayer => format!("TeleportToPlayer {}", player_id),
+                        CMD::PlayerToMe => format!("TeleportToMe {}", player_id),
+                        _ => unreachable!(),
+                    };
+
+                    update_clipboard(&mut clipboard, &cmd_str);
+                    audio_player.play(cmd)
+                }
+                _ => {}
+            }
         }
     }
 }
