@@ -97,6 +97,7 @@ fn main() {
     let audio_player = AudioPlayer::new();
 
     loop {
+        cmd_str.clear();
         // let mut clipboard: Clipboard = Clipboard::new().unwrap();
         sleep(Duration::from_millis(100));
         let keys = device_state.get_keys();
