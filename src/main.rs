@@ -80,11 +80,11 @@ fn match_cmd(keys: Vec<Keycode>) -> Option<CMD> {
     }
 }
 
-fn get_player_id(text: String) -> i32 {
-    // 判断是否为一个 长度为9 的数字 如：128991414
-    if text.len() == 9 {
-        if text.parse::<i32>().is_ok() {
-            return text.parse::<i32>().unwrap();
+fn get_player_id(text: String) -> i64 {
+    // 判断是否为一个 长度为9 的数字 如：1234567899
+    if text.len() == 10 {
+        if text.parse::<i64>().is_ok() {
+            return text.parse::<i64>().unwrap();
         }
     }
     // print!("剪切板内容并不是一个player id\t{}", text);
@@ -107,8 +107,8 @@ fn main() {
     println!(
         "开始监听剪切板和键盘, 按下 Ctrl + C 退出\n\
     1. `\\` + `s`\t\t\tShowPlayers\n\
-    2. 复制9位id + `\\` + `p`\tTeleportToPlayer\n\
-    3. 复制9位id + `\\` + `m`\tTeleportToMe\n"
+    2. 复制10位id + `\\` + `p`\tTeleportToPlayer\n\
+    3. 复制10位id + `\\` + `m`\tTeleportToMe\n"
     );
 
     loop {
