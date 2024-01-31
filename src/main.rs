@@ -4,12 +4,7 @@ use rodio::{Decoder, OutputStream, Sink};
 use std::collections::HashMap;
 use std::sync::mpsc;
 
-use std::{
-    thread,
-    thread::sleep,
-    time::Duration,
-    io::Cursor,
-};
+use std::{io::Cursor, thread, thread::sleep, time::Duration};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum CMD {
@@ -30,11 +25,20 @@ impl AudioPlayer {
         thread::spawn(move || {
             let (_stream, stream_handle) = OutputStream::try_default().unwrap();
             let mut sounds = HashMap::new();
-            
+
             // Load sounds
-            sounds.insert(CMD::ShowPlayers, include_bytes!("../audios/ShowPlayers.mp3").to_vec());
-            sounds.insert(CMD::MeToPlayer, include_bytes!("../audios/TeleportToPlayer.mp3").to_vec());
-            sounds.insert(CMD::PlayerToMe, include_bytes!("../audios/TeleportToMe.mp3").to_vec());
+            sounds.insert(
+                CMD::ShowPlayers,
+                include_bytes!("../audios/ShowPlayers.mp3").to_vec(),
+            );
+            sounds.insert(
+                CMD::MeToPlayer,
+                include_bytes!("../audios/TeleportToPlayer.mp3").to_vec(),
+            );
+            sounds.insert(
+                CMD::PlayerToMe,
+                include_bytes!("../audios/TeleportToMe.mp3").to_vec(),
+            );
 
             for (cmd, done_sender) in cmd_receiver {
                 if let Some(sound_data) = sounds.get(&cmd) {
@@ -58,7 +62,6 @@ impl AudioPlayer {
     }
 }
 
-
 fn match_cmd(keys: Vec<Keycode>) -> Option<CMD> {
     if keys.len() != 2 {
         return None;
@@ -69,7 +72,7 @@ fn match_cmd(keys: Vec<Keycode>) -> Option<CMD> {
             Keycode::S => Some(CMD::ShowPlayers),
             Keycode::P => Some(CMD::MeToPlayer),
             Keycode::M => Some(CMD::PlayerToMe),
-            _ => None
+            _ => None,
         }
     } else {
         None
@@ -87,13 +90,11 @@ fn to_palyer(text: String) -> i32 {
     return 0;
 }
 
-
 fn main() {
     let mut clipboard: Clipboard = Clipboard::new().unwrap();
     let device_state = DeviceState::new();
     let mut cmd_str = "".to_string();
     let audio_player = AudioPlayer::new();
-
 
     loop {
         // let mut clipboard: Clipboard = Clipboard::new().unwrap();
@@ -124,15 +125,12 @@ fn main() {
                 cmd_str = format!("TeleportToMe {}", player_id);
                 audio_player.play(CMD::PlayerToMe);
             }
-            _ => {
-                cmd_str = "".to_string();
-            }
+            _ => {}
         }
-        if cmd_str == "".to_string() {
-            continue;
+        if !cmd_str.is_empty() {
+            println!("CMD:\t{}", cmd_str);
+            clipboard.set_text(&cmd_str).unwrap();
         }
-        println!("CMD:\t{}", cmd_str);
-        clipboard.set_text(cmd_str).unwrap();
     }
 }
 
